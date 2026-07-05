@@ -23,7 +23,7 @@ if not GROQ_API_KEY:
 
 app = FastAPI(title="Hardware Speaker Headless API")
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 async def root():
     return {
         "status": "online",
