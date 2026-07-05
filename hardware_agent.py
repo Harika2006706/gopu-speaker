@@ -23,6 +23,15 @@ if not GROQ_API_KEY:
 
 app = FastAPI(title="Hardware Speaker Headless API")
 
+@app.get("/")
+async def root():
+    return {
+        "status": "online",
+        "service": "Dr. Gopu Hardware Speaker API",
+        "docs_url": "/docs",
+        "message": "Headless veterinary voice assistant backend is running live."
+    }
+
 class HardwareVetAgent:
     def __init__(self):
         self.llm_client = Groq(api_key=GROQ_API_KEY)
