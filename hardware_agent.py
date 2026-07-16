@@ -185,7 +185,7 @@ async def hardware_chat_endpoint(audio: UploadFile = File(...)):
     # 1. Transcribe Voice using High-Speed Groq Whisper
     try:
         audio_io = io.BytesIO(audio_data)
-        audio_io.name = "recording.webm"
+        audio_io.name = audio.filename if audio.filename else "recording.wav"
         if agent.waiting_for_language:
             prompt = "English, Telugu, Hindi, తెలుగు, हिंदी, ఆవు, కుక్క, పిల్లి, జ్వరం"
             lang_param = None
@@ -290,13 +290,23 @@ async def hardware_chat_endpoint(audio: UploadFile = File(...)):
 
         try:
             agent.chat_history.append({"role": "user", "content": sentence})
-            completion = agent.llm_client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=agent.chat_history,
-                temperature=0.4,
-                max_tokens=500 if agent.current_language in ["te", "hi"] else 180,
-                frequency_penalty=0.5,
-            )
+            try:
+                completion = agent.llm_client.chat.completions.create(
+                    model="llama-3.1-70b-versatile",
+                    messages=agent.chat_history,
+                    temperature=0.4,
+                    max_tokens=500 if agent.current_language in ["te", "hi"] else 180,
+                    frequency_penalty=0.5,
+                )
+            except Exception as e_model:
+                print(f"[Primary LLM Error - Falling back to instant model]: {e_model}")
+                completion = agent.llm_client.chat.completions.create(
+                    model="llama-3.1-8b-instant",
+                    messages=agent.chat_history,
+                    temperature=0.4,
+                    max_tokens=500 if agent.current_language in ["te", "hi"] else 180,
+                    frequency_penalty=0.5,
+                )
             reply_text = completion.choices[0].message.content.strip()
             agent.chat_history.append({"role": "assistant", "content": reply_text})
         except Exception as e_llm:
