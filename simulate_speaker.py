@@ -7,18 +7,15 @@ import requests
 try:
     import sounddevice as sd
     import soundfile as sf
-    import pygame
+    from playsound import playsound
 except ImportError:
-    print("[Simulator]: Installing required audio packages (sounddevice, soundfile, pygame, requests)...")
-    os.system("pip install sounddevice soundfile pygame requests")
+    print("[Simulator]: Installing required audio packages...")
+    os.system("pip install sounddevice soundfile playsound==1.2.2 requests")
     import sounddevice as sd
     import soundfile as sf
-    import pygame
+    from playsound import playsound
 
-# Initialize pygame mixer for audio playback
-pygame.mixer.init()
-
-API_URL = "http://localhost:8001/api/hardware_chat"
+API_URL = "http://127.0.0.1:8001/api/hardware_chat"
 SAMPLE_RATE = 16000
 CHANNELS = 1
 
@@ -31,15 +28,7 @@ def play_mp3_bytes(audio_bytes):
             temp_path = fp.name
             
         print("[Speaker Output]: Playing voice response...")
-        if pygame.mixer.get_init():
-            pygame.mixer.quit()
-        pygame.mixer.init(frequency=24000)
-        pygame.mixer.music.load(temp_path)
-        pygame.mixer.music.play()
-        while pygame.mixer.music.get_busy():
-            time.sleep(0.1)
-        pygame.mixer.music.unload()
-        pygame.mixer.quit()
+        playsound(temp_path)
         try:
             os.remove(temp_path)
         except Exception:
@@ -61,11 +50,10 @@ def main():
     print("="*60)
     print("   HEADLESS HARDWARE SPEAKER TERMINAL SIMULATOR")
     print("="*60)
-    print("Make sure hardware_agent.py is running in another terminal on port 8001!")
     
     # Auto-reset hardware state to standby on startup
     try:
-        requests.post("http://localhost:8001/api/hardware_reset")
+        requests.post("http://127.0.0.1:8001/api/hardware_reset")
         print("[Simulator]: Hardware server automatically reset to Standby Mode.")
     except Exception:
         pass
@@ -82,7 +70,7 @@ def main():
                 print("Exiting simulator.")
                 break
             if user_input == 'r':
-                requests.post("http://localhost:8001/api/hardware_reset")
+                requests.post("http://127.0.0.1:8001/api/hardware_reset")
                 print("[Simulator]: Speaker reset back to Standby Mode! Say 'Hey Gopu' to start.")
                 continue
                 

@@ -109,34 +109,13 @@ class HardwareVetAgent:
             "For cow stomach swelling ask about swelling location, breathing difficulty, cud chewing, and discomfort. "
             "For reduced milk production ask about feed changes, water intake, fever, and behavior. "
 
-            "LANGUAGE RULES: "
-            "Support English, Telugu, and Hindi. "
-            "Always reply in the user's selected language. "
-            "Maintain the same language throughout the conversation unless the user changes it. "
-            "Do not mix languages. "
-            "Use natural spoken language, not direct translation. "
-            "If speech recognition has mistakes, understand the intended meaning from context. "
-
-            "TELUGU: "
-            "Use natural spoken Telugu. "
-            "Keep words like dog=కుక్క, cat=పిల్లి, cow=ఆవు correct. "
-
-            "HINDI: "
-            "Use natural conversational Hindi like a veterinary assistant. "
-            "Do not translate word by word. "
-
             "STYLE: "
             "Use simple words. "
             "Do not use markdown, bullets, or long paragraphs. "
             "Do not add compliments or unrelated comments. "
             "Focus only on helping the animal owner. "
-
-            "GOODBYE: "
-            "If the user says bye, goodbye, okay bye, thank you, or ends the conversation, reply in the same language: "
-            "English: 'Okay, take care of your pet. If you need any help, don’t hesitate to call me. Take care, bye.' "
-            "Telugu: 'సరే, మీ పెంపుడు జంతువును జాగ్రత్తగా చూసుకోండి. ఏదైనా సహాయం కావాలంటే ఎప్పుడైనా నన్ను సంప్రదించండి. జాగ్రత్త, బై.' "
-            "Hindi: 'ठीक है, अपने पालतू जानवर का ध्यान रखें। अगर आपको कोई मदद चाहिए तो कभी भी मुझे बुला सकते हैं। अपना ध्यान रखें, बाय।' "
-
+            "If speech recognition has mistakes, understand the intended meaning from context. "
+            
             "Always prioritize animal safety."
         )
         self.base_sys_prompt = sys_prompt
@@ -247,7 +226,13 @@ async def hardware_chat_endpoint(audio: UploadFile = File(...)):
         agent.waiting_for_language = False
         agent.is_awake = True
 
-        lang_instruction = f"Always reply in the selected user language ({lang_name}). Maintain the same language throughout the conversation. Use natural spoken language, not direct translation."
+        if lang_name == "Telugu":
+            lang_instruction = "\n\nCRITICAL INSTRUCTION: You MUST reply ONLY in Telugu. Keep words like dog=కుక్క, cat=పిల్లి, cow=ఆవు correct."
+        elif lang_name == "Hindi":
+            lang_instruction = "\n\nCRITICAL INSTRUCTION: You MUST reply ONLY in Hindi. Use natural conversational Hindi."
+        else:
+            lang_instruction = "\n\nCRITICAL INSTRUCTION: You MUST reply ONLY in English."
+            
         full_sys = agent.base_sys_prompt + " " + lang_instruction
         agent.chat_history = [{"role": "system", "content": full_sys}]
 
@@ -286,13 +271,18 @@ async def hardware_chat_endpoint(audio: UploadFile = File(...)):
             agent.chat_history[0]["content"] = agent.base_sys_prompt + " Always reply in Hindi."
         elif any(w in clean_text for w in ["speak english", "in english", "to english"]):
             agent.current_language = "en"
-            agent.chat_history[0]["content"] = agent.base_sys_prompt + " Always reply in English."
+            agent.chat_history[0]["content"] = agent.base_sys_prompt + "\n\nCRITICAL INSTRUCTION: Always reply ONLY in English. Do not output Telugu or Hindi."
 
         try:
             agent.chat_history.append({"role": "user", "content": sentence})
+            
+            # Keep system prompt (index 0) and the last 8 messages to prevent rate limit crashes
+            if len(agent.chat_history) > 9:
+                agent.chat_history = [agent.chat_history[0]] + agent.chat_history[-8:]
+                
             try:
                 completion = agent.llm_client.chat.completions.create(
-                    model="llama-3.1-70b-versatile",
+                    model="llama-3.3-70b-versatile",
                     messages=agent.chat_history,
                     temperature=0.4,
                     max_tokens=500 if agent.current_language in ["te", "hi"] else 180,
