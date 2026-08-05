@@ -247,6 +247,8 @@ def detect_language_switch(text: str):
     telugu_phrases = [
         "speak telugu",
         "speak in telugu",
+        "speaking telugu",
+        "speaking in telugu",
         "talk in telugu",
         "talk telugu",
         "reply in telugu",
@@ -264,6 +266,8 @@ def detect_language_switch(text: str):
     hindi_phrases = [
         "speak hindi",
         "speak in hindi",
+        "speaking hindi",
+        "speaking in hindi",
         "talk in hindi",
         "talk hindi",
         "reply in hindi",
@@ -281,6 +285,8 @@ def detect_language_switch(text: str):
     english_phrases = [
         "speak english",
         "speak in english",
+        "speaking english",
+        "speaking in english",
         "talk in english",
         "talk english",
         "reply in english",
