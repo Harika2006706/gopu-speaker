@@ -1048,7 +1048,7 @@ async def hardware_chat_endpoint(
                     .chat
                     .completions
                     .create(
-                        model="llama-3.3-70b-versatile",
+                        model="openai/gpt-oss-120b",
                         messages=agent.chat_history,
                         temperature=0.4,
                         max_tokens=(
@@ -1073,7 +1073,7 @@ async def hardware_chat_endpoint(
                     .chat
                     .completions
                     .create(
-                        model="llama-3.1-8b-instant",
+                        model="openai/gpt-oss-20b",
                         messages=agent.chat_history,
                         temperature=0.4,
                         max_tokens=(
